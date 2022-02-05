@@ -3,6 +3,7 @@ import { Either } from '../shared/either'
 import { Container } from './container'
 
 import { ExistingElementError } from './errors/existing-element-error'
+import { UnexistingElementError } from './errors/unexisting-element-error'
 import { Module } from './module'
 
 export class Course {
@@ -24,22 +25,26 @@ export class Course {
     
   }
 
+  remove (module:Module):Either <UnexistingElementError, void>{
+     return this.modules.remove(module)
+  }
+
   includes (module: Module): boolean {
     return this.modules.includes(module)
   }
 
-  move (module: Module, position: number): void {
-    this.modules.move(module, position)
+  move (module: Module, position: number): Either <UnexistingElementError, void >{
+   return  this.modules.move(module, position)
   }
 
-  position (module: Module): number {
+  position (module: Module): Either<UnexistingElementError, number> {
     return this.modules.position(module)
   }
 
   moveLecture (lecture: Lecture, fromModule: Module, toModule: Module, position: number): void {
     fromModule.remove(lecture)
     toModule.add(lecture)
-    const currentLecturePosition = toModule.position(lecture)
+    const currentLecturePosition = toModule.position(lecture).value
     if (currentLecturePosition !== position) toModule.move(lecture, position)
   }
 }

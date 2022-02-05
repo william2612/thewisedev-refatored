@@ -1,6 +1,8 @@
 import { Either } from '../shared/either'
 import { Container } from './container'
 import { ExistingElementError } from './errors/existing-element-error'
+import { InvalidPositionError } from './errors/invalid-position-error'
+import { UnexistingElementError } from './errors/unexisting-element-error'
 import { Material } from './material'
 import { Element } from './part'
 
@@ -22,10 +24,18 @@ export class Lecture implements Element {
     return this.materials.includes(material)
   }
 
-  remove (material: Material): void {
-    this.materials.remove(material)
+  remove (material: Material): Either <UnexistingElementError, void> {
+    return this.materials.remove(material)
+  }
+  
+  move(material:Material, to: number): Either<UnexistingElementError | InvalidPositionError, void> {
+    return this.materials.move(material, to)
   }
 
+
+  position (material: Material):Either <UnexistingElementError, number>{
+     return this.materials.position(material)
+  }
   equals (other: Lecture): boolean {
     return this.description === other.description
   }

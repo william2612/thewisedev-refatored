@@ -1,5 +1,7 @@
 import { Either, left, right } from '../shared/either'
 import { ExistingElementError } from './errors/existing-element-error'
+import { InvalidPositionError } from './errors/invalid-position-error'
+import { UnexistingElementError } from './errors/unexisting-element-error'
 import { Element } from './part'
 
 export class Container<T extends Element> {
@@ -24,24 +26,28 @@ export class Container<T extends Element> {
     return this.elements.find(p => p.equals(element) === true) !== undefined
   }
 
-  move (element: T, to: number): void {
-    if (to > this.elements.length || to < 1) return
-    const from = this.position(element)
-    moveInArray(this.elements, from - 1, to - 1)
+  move (element: T, to: number):Either<UnexistingElementError | InvalidPositionError, void> {
+    if (to > this.elements.length || to < 1) return left(new InvalidPositionError)
+    if(!this.includes(element)) return left(new UnexistingElementError())
+    const from = this.position(element).value as number
+    return right (moveInArray(this.elements, from - 1, to - 1))
   }
 
-  position (element: T): number {
+  position (element: T): Either <UnexistingElementError,number> {
     const partInContainer = this.elements.find(p => p.equals(element))
     if (partInContainer === undefined) {
-      return undefined
+      return left(new UnexistingElementError())
     }
-    return this.elements.indexOf(partInContainer) + 1
+    return  right(this.elements.indexOf(partInContainer) + 1)
   }
 
-  remove (elements: T): void {
-    if (!this.includes(elements)) return
-    const positionInArray = this.position(elements) - 1
-    this.elements.splice(positionInArray, 1)
+  remove (elements: T): Either <UnexistingElementError, void> {
+    if (!this.includes(elements)) return left(new UnexistingElementError())
+    const positionInArray = this.position(elements).value as number - 1
+     return right (this.splice(positionInArray, 1))
+  }
+  private splice(position:number, numberOfElements:number): void{
+    this.elements.splice(position, numberOfElements)
   }
 }
 

@@ -1,5 +1,8 @@
+import exp from 'constants'
 import { Lecture, Module } from '../../src/entities'
 import { ExistingElementError } from '../../src/entities/errors/existing-element-error'
+import { InvalidPositionError } from '../../src/entities/errors/invalid-position-error'
+import { UnexistingElementError } from '../../src/entities/errors/unexisting-element-error'
 
 
 describe('Module', () => {
@@ -35,17 +38,24 @@ describe('Module', () => {
 
     module.move(branching, 3)
 
-    expect(module.position(commiting)).toBe(1)
-    expect(module.position(pushing)).toBe(2)
-    expect(module.position(branching)).toBe(3)
+    expect(module.position(commiting).value).toBe(1)
+    expect(module.position(pushing).value).toBe(2)
+    expect(module.position(branching).value).toBe(3)
   })
-
-  it('should handle unexisting lecture', () => {
+  
+  it('should not be able to move unexisting lectures', () => {
     const module = new Module('Fundamentals')
     const branching: Lecture = new Lecture('Branching', 'https://youtube.com/branching')
+    const commiting: Lecture = new Lecture('Commiting', 'https://youtube.com/commiting')
+    const pushing: Lecture = new Lecture('Pushing', 'https://youtube.com/pushing')
 
-    expect(module.position(branching)).toBeUndefined()
+    module.add(branching)
+    module.add(commiting)
+    const error=module.move(pushing,1).value as Error
+    expect(error).toBeInstanceOf(UnexistingElementError)
+
   })
+  
 
   it('should handle exceeding position while rearranging', () => {
     const module = new Module('Fundamentals')
@@ -57,11 +67,12 @@ describe('Module', () => {
     module.add(commiting)
     module.add(pushing)
 
-    module.move(branching, 10)
+    const error = module.move(branching, 10).value as Error
+    expect(error).toBeInstanceOf(InvalidPositionError)
 
-    expect(module.position(branching)).toBe(1)
-    expect(module.position(commiting)).toBe(2)
-    expect(module.position(pushing)).toBe(3)
+    expect(module.position(branching).value).toBe(1)
+    expect(module.position(commiting).value).toBe(2)
+    expect(module.position(pushing).value).toBe(3)
   })
 
   it('should handle negative position while rearranging', () => {
@@ -74,11 +85,13 @@ describe('Module', () => {
     module.add(commiting)
     module.add(pushing)
 
-    module.move(branching, 0)
+    const error = module.move(branching, 0).value as Error
+    expect(error).toBeInstanceOf(InvalidPositionError)
 
-    expect(module.position(branching)).toBe(1)
-    expect(module.position(commiting)).toBe(2)
-    expect(module.position(pushing)).toBe(3)
+
+    expect(module.position(branching).value).toBe(1)
+    expect(module.position(commiting).value).toBe(2)
+    expect(module.position(pushing).value).toBe(3)
   })
 
   it('should be able to remove a lecture', () => {
@@ -94,7 +107,14 @@ describe('Module', () => {
     const branching: Lecture = new Lecture('Branching', 'https://youtube.com/branching')
     const commiting: Lecture = new Lecture('Commiting', 'https://youtube.com/commiting')
     module.add(commiting)
-    module.remove(branching)
+    const error = module.remove(branching).value as Error
     expect(module.numberOfLectures).toEqual(1)
+    expect(error).toBeInstanceOf(UnexistingElementError)
+  })
+  it('should not be able to determine positions of unexisting lecture', () => {
+    const module = new Module('Fundamentals')
+    const lecture: Lecture = new Lecture('Branching', 'https://youtube.com/1234')
+    const error = module.position(lecture).value as Error
+    expect(error).toBeInstanceOf(UnexistingElementError)
   })
 })
